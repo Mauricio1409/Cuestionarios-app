@@ -1,1 +1,241 @@
-{% extends "base.html" %}{% block content %}<h1>Login</h1><form method="post">{% csrf_token %}{{ form.as_p }}<button>Entrar</button></form>{% endblock %}
+{% extends "base.html" %}
+
+{% block title %}Ingresar · Preguntero{% endblock %}
+{% block body_class %}login-page{% endblock %}
+
+{% block extra_head %}
+  <style>
+    .login-layout {
+      min-height: calc(100vh - 160px);
+      display: grid;
+      place-items: start center;
+      padding-top: clamp(32px, 8vw, 84px);
+    }
+
+    .login-hero {
+      width: min(100%, 760px);
+      display: grid;
+      gap: 24px;
+      justify-items: center;
+    }
+
+    .login-copy {
+      width: min(100%, 360px);
+      justify-self: center;
+    }
+
+    .login-eyebrow {
+      display: inline-block;
+      margin-bottom: 12px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.28em;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+
+    .login-title {
+      margin: 0 0 10px;
+      font-family: "Cormorant Garamond", serif;
+      font-size: clamp(3rem, 6vw, 4.3rem);
+      line-height: 0.92;
+      letter-spacing: -0.055em;
+      font-weight: 600;
+    }
+
+    .login-description {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.98rem;
+      line-height: 1.7;
+      max-width: 30ch;
+    }
+
+    .login-card {
+      width: min(100%, 360px);
+      padding: 20px;
+      border-radius: 20px;
+      border: 1px solid var(--line-strong);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.93), rgba(253, 248, 241, 0.96));
+      box-shadow: var(--shadow);
+    }
+
+    .login-errors,
+    .field-errors {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      color: #9a2d21;
+      font-size: 0.84rem;
+    }
+
+    .login-errors {
+      margin-bottom: 14px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(154, 45, 33, 0.08);
+      border: 1px solid rgba(154, 45, 33, 0.15);
+    }
+
+    .field-group + .field-group {
+      margin-top: 16px;
+    }
+
+    .field-label {
+      display: block;
+      margin-bottom: 8px;
+      color: #7d6758;
+      font-size: 0.74rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .field-input {
+      width: 100%;
+      height: 46px;
+      border-radius: 10px;
+      border: 1px solid rgba(151, 126, 104, 0.34);
+      background: rgba(244, 238, 230, 0.66);
+      color: var(--text);
+      padding: 0 14px;
+      outline: none;
+      transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+      font: inherit;
+    }
+
+    .field-input::placeholder {
+      color: #b19e90;
+    }
+
+    .field-input:focus {
+      border-color: rgba(152, 55, 31, 0.45);
+      background: #fffdf9;
+      box-shadow: 0 0 0 4px rgba(152, 55, 31, 0.08);
+    }
+
+    .field-errors {
+      margin-top: 8px;
+    }
+
+    .login-submit {
+      width: 100%;
+      height: 46px;
+      margin-top: 18px;
+      border: 0;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #fff8f3;
+      font: inherit;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      cursor: pointer;
+      transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease;
+      box-shadow: 0 14px 26px rgba(152, 55, 31, 0.18);
+    }
+
+    .login-submit:hover {
+      background: var(--accent-dark);
+      transform: translateY(-1px);
+    }
+
+    .login-secondary {
+      display: flex;
+      justify-content: center;
+      margin-top: 14px;
+    }
+
+    .login-secondary a,
+    .login-secondary button {
+      border: 0;
+      background: transparent;
+      color: #9b8b7d;
+      font: inherit;
+      font-size: 0.92rem;
+      cursor: pointer;
+      padding: 6px 10px;
+    }
+
+    .login-secondary a:hover,
+    .login-secondary button:hover {
+      color: var(--accent);
+    }
+
+    @media (max-width: 640px) {
+      .login-layout {
+        min-height: auto;
+        padding-top: 12px;
+      }
+
+      .login-copy,
+      .login-card {
+        width: 100%;
+      }
+
+      .login-title {
+        font-size: 2.8rem;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <section class="login-layout">
+    <div class="login-hero">
+      <div class="login-copy">
+        <span class="login-eyebrow">Acceso</span>
+        <h1 class="login-title">Ingresar</h1>
+        <p class="login-description">Iniciá sesión para continuar con tus materias, revisar tu progreso y resolver quizzes activos.</p>
+      </div>
+
+      <div class="login-card">
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+            <ul class="login-errors">
+              {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+
+          <div class="field-group">
+            <label class="field-label" for="{{ form.email.id_for_label }}">Usuario</label>
+            <input
+              class="field-input"
+              type="email"
+              name="{{ form.email.html_name }}"
+              id="{{ form.email.id_for_label }}"
+              value="{{ form.email.value|default:'' }}"
+              autocomplete="email"
+              required
+            >
+            {% if form.email.errors %}
+              <ul class="field-errors">{% for error in form.email.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+            {% endif %}
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="{{ form.password.id_for_label }}">Contraseña</label>
+            <input
+              class="field-input"
+              type="password"
+              name="{{ form.password.html_name }}"
+              id="{{ form.password.id_for_label }}"
+              autocomplete="current-password"
+              required
+            >
+            {% if form.password.errors %}
+              <ul class="field-errors">{% for error in form.password.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+            {% endif %}
+          </div>
+
+          <button class="login-submit" type="submit">Entrar</button>
+        </form>
+
+        <div class="login-secondary">
+          <button type="button" onclick="history.back()">Volver</button>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}

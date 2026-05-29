@@ -4,17 +4,19 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 
 from apps.users.forms import LoginForm, ProfileForm, SignUpForm
+from core.authz import staff_required
 
 
+@login_required
+@staff_required
 def signup_view(request):
     form = SignUpForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         user = form.save(commit=False)
         user.set_password(form.cleaned_data["password1"])
         user.save()
-        login(request, user)
-        messages.success(request, "Cuenta creada correctamente.")
-        return redirect("catalog:subjects")
+        messages.success(request, f"Cuenta creada correctamente para {user.email}.")
+        return redirect("accounts:signup")
     return render(request, "accounts/signup.html", {"form": form})
 
 

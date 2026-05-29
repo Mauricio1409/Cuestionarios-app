@@ -3,6 +3,7 @@ from functools import wraps
 from django.shortcuts import redirect
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
+from rest_framework.permissions import BasePermission
 
 
 class StaffRequiredMixin(UserPassesTestMixin):
@@ -21,3 +22,10 @@ def staff_required(view_func):
         return view_func(request, *args, **kwargs)
 
     return _wrapped
+
+
+class StaffAPIRequiredPermission(BasePermission):
+    message = "Acceso denegado: endpoint solo para administradores."
+
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_authenticated and request.user.is_staff)

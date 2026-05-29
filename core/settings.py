@@ -190,6 +190,9 @@ DJOSER = {
         "user": "apps.users.serializers.user_serializer.UserSerializer",
         "current_user": "apps.users.serializers.user_serializer.UserSerializer",
     },
+    "PERMISSIONS": {
+        "user_create": ["core.authz.StaffAPIRequiredPermission"],
+    },
 }
 
 
