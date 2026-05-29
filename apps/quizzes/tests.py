@@ -55,6 +55,96 @@ class QuizCatalogAndAdminAccessTests(TestCase):
         quiz = Quiz.objects.get(name="Parcial 1")
         self.assertEqual(quiz.subject_id, self.subject.id)
 
+    def test_staff_can_edit_quiz(self):
+        quiz = Quiz.objects.create(subject=self.subject, name="Parcial 1", description="desc", is_active=True)
+
+        self.client.force_login(self.staff)
+        response = self.client.post(
+            reverse("admin-ui:quiz-edit", args=[quiz.id]),
+            {"subject": self.subject.id, "name": "Parcial Renombrado", "description": "nuevo", "is_active": False},
+        )
+
+        self.assertRedirects(response, reverse("admin-ui:quiz-list"))
+        quiz.refresh_from_db()
+        self.assertEqual(quiz.name, "Parcial Renombrado")
+        self.assertFalse(quiz.is_active)
+
+    def test_staff_can_delete_quiz_with_questions_in_cascade(self):
+        quiz = Quiz.objects.create(subject=self.subject, name="Parcial 1", is_active=True)
+        Question.objects.create(
+            quiz=quiz,
+            statement="Q1",
+            question_type=QuestionType.SINGLE_CHOICE,
+            score="1.00",
+            position=1,
+        )
+
+        self.client.force_login(self.staff)
+        response = self.client.post(reverse("admin-ui:quiz-delete", args=[quiz.id]))
+
+        self.assertRedirects(response, reverse("admin-ui:quiz-list"))
+        self.assertFalse(Quiz.objects.filter(id=quiz.id).exists())
+        self.assertFalse(Question.objects.filter(quiz_id=quiz.id).exists())
+
+    def test_staff_can_view_question_list_for_quiz(self):
+        quiz = Quiz.objects.create(subject=self.subject, name="Parcial 1", is_active=True)
+        question = Question.objects.create(
+            quiz=quiz,
+            statement="Q1",
+            question_type=QuestionType.SINGLE_CHOICE,
+            score="1.00",
+            position=1,
+        )
+
+        self.client.force_login(self.staff)
+        response = self.client.get(reverse("admin-ui:question-list", args=[quiz.id]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, question.statement)
+
+    def test_staff_can_edit_question(self):
+        quiz = Quiz.objects.create(subject=self.subject, name="Parcial 1", is_active=True)
+        question = Question.objects.create(
+            quiz=quiz,
+            statement="Q1",
+            question_type=QuestionType.SINGLE_CHOICE,
+            score="1.00",
+            position=1,
+        )
+
+        self.client.force_login(self.staff)
+        response = self.client.post(
+            reverse("admin-ui:question-edit", args=[question.id]),
+            {
+                "statement": "Q1 editada",
+                "question_type": QuestionType.MULTIPLE_CHOICE,
+                "score": "2.00",
+                "explanation": "exp",
+                "position": 3,
+            },
+        )
+
+        self.assertRedirects(response, reverse("admin-ui:question-list", args=[quiz.id]))
+        question.refresh_from_db()
+        self.assertEqual(question.statement, "Q1 editada")
+        self.assertEqual(question.position, 3)
+
+    def test_staff_can_delete_question(self):
+        quiz = Quiz.objects.create(subject=self.subject, name="Parcial 1", is_active=True)
+        question = Question.objects.create(
+            quiz=quiz,
+            statement="Q1",
+            question_type=QuestionType.SINGLE_CHOICE,
+            score="1.00",
+            position=1,
+        )
+
+        self.client.force_login(self.staff)
+        response = self.client.post(reverse("admin-ui:question-delete", args=[question.id]))
+
+        self.assertRedirects(response, reverse("admin-ui:question-list", args=[quiz.id]))
+        self.assertFalse(Question.objects.filter(id=question.id).exists())
+
     def test_non_image_upload_is_rejected(self):
         quiz = Quiz.objects.create(subject=self.subject, name="Con imágenes", is_active=True)
         fake_txt = SimpleUploadedFile("nota.txt", b"no es imagen", content_type="text/plain")

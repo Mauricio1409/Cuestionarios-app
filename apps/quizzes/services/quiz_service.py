@@ -68,9 +68,53 @@ class QuizAdminService:
     def create_quiz(self, data):
         return self.quiz_repo.create(**data)
 
+    def update_quiz(self, quiz_id, data):
+        quiz = self.quiz_repo.get(quiz_id)
+        if not quiz:
+            raise ValidationError("Quiz no encontrado.")
+        return self.quiz_repo.update(quiz, **data)
+
+    def delete_quiz(self, quiz_id):
+        quiz = self.quiz_repo.get(quiz_id)
+        if not quiz:
+            raise ValidationError("Quiz no encontrado.")
+        self.quiz_repo.delete(quiz)
+
+    def get_quiz(self, quiz_id):
+        quiz = self.quiz_repo.get(quiz_id)
+        if not quiz:
+            raise ValidationError("Quiz no encontrado.")
+        return quiz
+
+    def list_questions(self, quiz_id):
+        quiz = self.get_quiz(quiz_id)
+        questions = self.question_repo.by_quiz(quiz_id)
+        return quiz, questions
+
     def create_question(self, quiz_id, data):
         quiz = self.quiz_repo.get(quiz_id)
         if not quiz:
             raise ValidationError("Quiz no encontrado.")
         self.domain.validate_question_content(data.get("statement"), data.get("image"))
         return self.question_repo.create(quiz=quiz, **data)
+
+    def update_question(self, question_id, data):
+        question = self.question_repo.get(question_id)
+        if not question:
+            raise ValidationError("Pregunta no encontrada.")
+        self.domain.validate_question_content(data.get("statement"), data.get("image") or question.image)
+        return self.question_repo.update(question, **data)
+
+    def delete_question(self, question_id):
+        question = self.question_repo.get(question_id)
+        if not question:
+            raise ValidationError("Pregunta no encontrada.")
+        quiz_id = question.quiz_id
+        self.question_repo.delete(question)
+        return quiz_id
+
+    def get_question(self, question_id):
+        question = self.question_repo.get(question_id)
+        if not question:
+            raise ValidationError("Pregunta no encontrada.")
+        return question

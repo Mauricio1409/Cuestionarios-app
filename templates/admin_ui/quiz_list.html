@@ -1,1 +1,81 @@
-{% extends "base.html" %}{% block content %}<h1>Quizzes</h1><a href="/staff/quizzes/new/">Nuevo quiz</a><ul>{% for q in quizzes %}<li>{{ q.name }} ({{ q.subject.name }}) <a href="/staff/quizzes/{{ q.id }}/questions/new/">+ Pregunta</a></li>{% endfor %}</ul>{% endblock %}
+{% extends "base.html" %}
+
+{% block title %}Gestión de cuestionarios · Preguntero{% endblock %}
+
+{% block extra_head %}
+  <style>
+    .admin-page { display:grid; gap:32px; max-width:1100px; margin:0 auto; padding-top:clamp(10px,2vw,20px); }
+    .admin-hero { display:grid; gap:16px; }
+    .admin-eyebrow { color:var(--accent); text-transform:uppercase; letter-spacing:.28em; font-size:.72rem; font-weight:700; }
+    .admin-title { margin:0; font-family:"Cormorant Garamond",serif; font-size:clamp(2.9rem,6vw,4.3rem); line-height:.96; letter-spacing:-.05em; font-weight:600; max-width:12ch; }
+    .admin-description { margin:0; max-width:64ch; color:var(--muted); line-height:1.7; }
+    .admin-toolbar { display:flex; justify-content:space-between; align-items:center; gap:12px; padding-bottom:14px; border-bottom:1px solid rgba(116,84,56,.12); }
+    .admin-toolbar__meta { color:var(--muted); text-transform:uppercase; letter-spacing:.18em; font-size:.76rem; }
+    .admin-toolbar__cta { display:inline-flex; min-height:44px; padding:0 18px; border-radius:999px; align-items:center; justify-content:center; background:var(--accent); color:#fff8f3; font-weight:700; box-shadow:0 14px 26px rgba(152,55,31,.18); }
+    .admin-list { display:grid; gap:16px; }
+    .admin-card { display:grid; grid-template-columns:minmax(0,1.6fr) auto auto; gap:18px; align-items:center; padding:22px; border-radius:22px; border:1px solid var(--line); border-left:4px solid var(--accent); background:linear-gradient(180deg,rgba(255,255,255,.94),rgba(252,247,240,.9)); box-shadow:0 18px 42px rgba(88,58,34,.06); }
+    .admin-card:nth-child(3n+2){border-left-color:#23837a;} .admin-card:nth-child(3n){border-left-color:#379a50;}
+    .admin-card__content { display:grid; gap:10px; min-width:0; }
+    .admin-card__meta { display:flex; flex-wrap:wrap; gap:10px 16px; color:#8b755f; text-transform:uppercase; letter-spacing:.16em; font-size:.72rem; }
+    .admin-card__title { margin:0; font-family:"Cormorant Garamond",serif; font-size:2rem; line-height:1; letter-spacing:-.04em; font-weight:600; }
+    .admin-card__subtitle { margin:0; color:var(--muted); line-height:1.6; }
+    .admin-card__stats { display:grid; justify-items:center; gap:4px; min-width:130px; padding:14px 18px; border-radius:18px; background:rgba(255,255,255,.66); border:1px solid rgba(116,84,56,.1); }
+    .admin-card__stats-label { color:#8b755f; text-transform:uppercase; letter-spacing:.18em; font-size:.68rem; }
+    .admin-card__stats-value { font-family:"Cormorant Garamond",serif; font-size:2rem; line-height:1; }
+    .admin-card__actions { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+    .admin-action,.admin-action--ghost,.admin-action--danger { display:inline-flex; min-height:40px; padding:0 14px; border-radius:999px; align-items:center; justify-content:center; font-weight:700; font-size:.9rem; }
+    .admin-action { background:var(--accent); color:#fff8f3; }
+    .admin-action--ghost { background:rgba(35,131,122,.1); color:#1b6d65; }
+    .admin-action--danger { border:0; cursor:pointer; font:inherit; background:rgba(199,63,47,.1); color:#a53b2f; }
+    .admin-empty { padding:30px 24px; border:1px dashed rgba(116,84,56,.24); border-radius:18px; background:rgba(255,255,255,.45); color:var(--muted); }
+    @media (max-width:920px){ .admin-card{grid-template-columns:1fr;} .admin-card__stats,.admin-card__actions{justify-items:start;} .admin-card__actions{justify-content:flex-start;} .admin-toolbar{flex-direction:column; align-items:flex-start;} }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <section class="admin-page">
+    <header class="admin-hero">
+      <span class="admin-eyebrow">Staff</span>
+      <h1 class="admin-title">Gestión de cuestionarios y preguntas.</h1>
+      <p class="admin-description">Primero creás el cuestionario vacío. Después entrás a sus preguntas, las editás, las eliminás y seguís completando el contenido sin perder el contexto.</p>
+    </header>
+
+    <div class="admin-toolbar">
+      <span class="admin-toolbar__meta">{{ quizzes|length }} cuestionarios</span>
+      <a class="admin-toolbar__cta" href="{% url 'admin-ui:quiz-create' %}">Nuevo cuestionario</a>
+    </div>
+
+    {% if quizzes %}
+      <div class="admin-list">
+        {% for q in quizzes %}
+          <article class="admin-card">
+            <div class="admin-card__content">
+              <div class="admin-card__meta">
+                <span>{{ q.subject.name }}</span>
+                <span>{% if q.is_active %}Activo{% else %}Inactivo{% endif %}</span>
+              </div>
+              <h2 class="admin-card__title">{{ q.name }}</h2>
+              <p class="admin-card__subtitle">{{ q.description|default:"Todavía no tiene descripción cargada." }}</p>
+            </div>
+
+            <div class="admin-card__stats">
+              <span class="admin-card__stats-label">Preguntas</span>
+              <strong class="admin-card__stats-value">{{ q.question_count|default:0 }}</strong>
+            </div>
+
+            <div class="admin-card__actions">
+              <a class="admin-action" href="{% url 'admin-ui:question-list' q.id %}">Gestionar preguntas</a>
+              <a class="admin-action--ghost" href="{% url 'admin-ui:quiz-edit' q.id %}">Editar</a>
+              <form method="post" action="{% url 'admin-ui:quiz-delete' q.id %}" onsubmit="return confirm('¿Eliminar el cuestionario {{ q.name|escapejs }} con todas sus preguntas?');">
+                {% csrf_token %}
+                <button class="admin-action--danger" type="submit">Eliminar</button>
+              </form>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="admin-empty">Todavía no hay cuestionarios cargados. Creá uno nuevo para empezar a sumar preguntas.</div>
+    {% endif %}
+  </section>
+{% endblock %}
