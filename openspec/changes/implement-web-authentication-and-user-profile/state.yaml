@@ -1,0 +1,7 @@
+change: implement-web-authentication-and-user-profile
+stage: implemented
+depends_on:
+  - bootstrap-template-architecture
+blocks:
+  - implement-quiz-taking-flow
+  - implement-attempt-history-and-results

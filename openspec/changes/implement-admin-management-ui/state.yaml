@@ -1,0 +1,8 @@
+change: implement-admin-management-ui
+stage: implemented
+depends_on:
+  - implement-subjects-and-quizzes-domain
+  - implement-questions-and-options-domain
+  - implement-attempt-history-and-results
+blocks:
+  - harden-validation-security-and-usability

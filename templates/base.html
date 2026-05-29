@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>{% block title %}Preguntero{% endblock %}</title>
+  <style>body{font-family:Arial;margin:0}nav{background:#222;color:#fff;padding:10px}nav a{color:#fff;margin-right:10px}.container{padding:16px}.msg{padding:8px;background:#eef;margin:8px 0}</style>
+</head>
+<body>
+  <nav>
+    <a href="/subjects/">Materias</a>
+    <a href="/quizzes/">Quizzes</a>
+    {% if user.is_authenticated %}
+      <a href="/attempts/history/">Historial</a>
+      <a href="/accounts/profile/">Perfil</a>
+      {% if user.is_staff %}<a href="/staff/">Admin UI</a>{% endif %}
+      <a href="/accounts/logout/">Salir</a>
+    {% else %}
+      <a href="/accounts/login/">Ingresar</a>
+      <a href="/accounts/signup/">Registrarse</a>
+    {% endif %}
+  </nav>
+  <div class="container">
+    {% for message in messages %}<div class="msg">{{ message }}</div>{% endfor %}
+    {% block content %}{% endblock %}
+  </div>
+</body>
+</html>

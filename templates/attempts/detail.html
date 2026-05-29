@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Resultado</h1><p>Puntaje: {{ attempt.score }} / {{ attempt.total_score }}</p>
+<ul>{% for a in attempt.answers.all %}<li>{{ a.question.statement|default:"Pregunta con imagen" }} - {% if a.is_correct %}Correcta{% else %}Incorrecta{% endif %}</li>{% endfor %}</ul>
+{% endblock %}

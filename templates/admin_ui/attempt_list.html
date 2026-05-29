@@ -1,0 +1,1 @@
+{% extends "base.html" %}{% block content %}<h1>Intentos</h1><form method="get">{{ form.as_p }}<button>Filtrar</button></form><ul>{% for a in attempts %}<li>{{ a.user.email }} - {{ a.quiz.name }} - {{ a.score }}/{{ a.total_score }}</li>{% endfor %}</ul>{% endblock %}

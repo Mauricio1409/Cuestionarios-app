@@ -1,0 +1,1 @@
+{% extends "base.html" %}{% block content %}<h1>Quizzes activos</h1><ul>{% for q in quizzes %}<li>{{ q.subject.name }} - {{ q.name }} <a href="/attempts/start/{{ q.id }}/">Resolver</a></li>{% empty %}<li>Sin quizzes activos</li>{% endfor %}</ul>{% endblock %}

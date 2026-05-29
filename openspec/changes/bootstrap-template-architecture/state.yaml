@@ -1,0 +1,11 @@
+change: bootstrap-template-architecture
+stage: implemented
+depends_on: []
+blocks:
+  - implement-subjects-and-quizzes-domain
+  - implement-questions-and-options-domain
+  - implement-web-authentication-and-user-profile
+  - implement-quiz-taking-flow
+  - implement-attempt-history-and-results
+  - implement-admin-management-ui
+  - harden-validation-security-and-usability

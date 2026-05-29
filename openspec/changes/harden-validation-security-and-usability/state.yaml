@@ -1,0 +1,11 @@
+change: harden-validation-security-and-usability
+stage: implemented
+depends_on:
+  - bootstrap-template-architecture
+  - implement-subjects-and-quizzes-domain
+  - implement-questions-and-options-domain
+  - implement-web-authentication-and-user-profile
+  - implement-quiz-taking-flow
+  - implement-attempt-history-and-results
+  - implement-admin-management-ui
+blocks: []

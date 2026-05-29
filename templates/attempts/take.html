@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ attempt.quiz.name }}</h1>
+<form method="post" action="/attempts/submit/{{ attempt.id }}/">{% csrf_token %}
+{% for q in questions %}
+<fieldset><legend>{{ q.position }}. {{ q.statement }}</legend>
+{% if q.image %}<img src="{{ q.image.url }}" style="max-width:250px"/>{% endif %}
+{% for o in q.options.all %}
+<label>
+  <input type="{% if q.question_type == 'single_choice' %}radio{% else %}checkbox{% endif %}" name="question_{{ q.id }}" value="{{ o.id }}">{{ o.text }}
+</label><br>
+{% endfor %}
+</fieldset>
+{% endfor %}
+<button type="submit">Finalizar</button></form>
+{% endblock %}

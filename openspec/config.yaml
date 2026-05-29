@@ -1,0 +1,29 @@
+schema: spec-driven
+context: |
+  Stack: Python 3.12 + Django 6 + DRF + PostgreSQL (Docker/Gunicorn)
+  Architecture: Django monolith con patrón por capas View -> Service -> Repository
+  UI: Django templates (sin frontend desacoplado)
+  Testing: Django test runner disponible (manage.py test)
+  Style: Sin linter/type-checker/formatter configurados explícitamente en repo
+strict_tdd: false
+testing:
+  strict_tdd_mode: disabled
+  detected_on: "2026-05-28"
+  test_runner: { available: true, framework: "Django unittest", command: "python manage.py test" }
+  layers:
+    unit: { available: true, tool: "Django TestCase/unittest" }
+    integration: { available: false, tool: "—" }
+    e2e: { available: false, tool: "—" }
+  coverage: { available: false, command: "—" }
+  quality_tools:
+    linter: { available: false, command: "—" }
+    type_checker: { available: false, command: "—" }
+    formatter: { available: false, command: "—" }
+rules:
+  proposal: ["Include rollback plan for risky changes", "Identify affected modules/packages"]
+  specs: ["Use Given/When/Then format", "Use RFC 2119 keywords (MUST/SHALL/SHOULD/MAY)"]
+  design: ["Include sequence diagrams for complex flows", "Document architecture decisions with rationale"]
+  tasks: ["Group tasks by phase", "Use hierarchical numbering", "Keep tasks small enough for one session"]
+  apply: ["Follow existing code patterns", "Load relevant coding skills for project stack"]
+  verify: ["Run tests if infrastructure exists", "Compare implementation against every spec scenario"]
+  archive: ["Warn before merging destructive deltas"]

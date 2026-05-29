@@ -1,0 +1,1 @@
+{% extends "base.html" %}{% block content %}<h1>Historial</h1><ul>{% for a in attempts %}<li>{{ a.quiz.name }} - {{ a.score }}/{{ a.total_score }} <a href="/attempts/{{ a.id }}/">ver</a></li>{% endfor %}</ul>{% endblock %}

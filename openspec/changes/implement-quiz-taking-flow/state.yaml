@@ -1,0 +1,10 @@
+change: implement-quiz-taking-flow
+stage: implemented
+depends_on:
+  - bootstrap-template-architecture
+  - implement-subjects-and-quizzes-domain
+  - implement-questions-and-options-domain
+  - implement-web-authentication-and-user-profile
+blocks:
+  - implement-attempt-history-and-results
+  - harden-validation-security-and-usability

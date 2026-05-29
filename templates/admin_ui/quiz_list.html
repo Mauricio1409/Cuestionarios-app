@@ -1,0 +1,1 @@
+{% extends "base.html" %}{% block content %}<h1>Quizzes</h1><a href="/staff/quizzes/new/">Nuevo quiz</a><ul>{% for q in quizzes %}<li>{{ q.name }} ({{ q.subject.name }}) <a href="/staff/quizzes/{{ q.id }}/questions/new/">+ Pregunta</a></li>{% endfor %}</ul>{% endblock %}

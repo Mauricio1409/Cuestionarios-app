@@ -1,0 +1,1 @@
+{% extends "base.html" %}{% block content %}<h1>Materias</h1><ul>{% for s in subjects %}<li>{{ s.name }}</li>{% empty %}<li>Sin materias</li>{% endfor %}</ul>{% endblock %}

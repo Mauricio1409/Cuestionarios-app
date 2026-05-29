@@ -1,0 +1,8 @@
+change: implement-subjects-and-quizzes-domain
+stage: implemented
+depends_on:
+  - bootstrap-template-architecture
+blocks:
+  - implement-questions-and-options-domain
+  - implement-quiz-taking-flow
+  - implement-admin-management-ui
