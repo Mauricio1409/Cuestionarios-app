@@ -1,12 +1,16 @@
+from django.db.models import Count
+
 from apps.quizzes.models import Quiz, Question
 
 
 class QuizRepository:
     def list_all(self):
-        return Quiz.objects.select_related("subject")
+        return Quiz.objects.select_related("subject").annotate(question_count=Count("questions", distinct=True))
 
     def list_active(self):
-        return Quiz.objects.select_related("subject").filter(is_active=True)
+        return Quiz.objects.select_related("subject").filter(is_active=True).annotate(
+            question_count=Count("questions", distinct=True)
+        )
 
     def get(self, pk: int):
         return Quiz.objects.select_related("subject").filter(pk=pk).first()
