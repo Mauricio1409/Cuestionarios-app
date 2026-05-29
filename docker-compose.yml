@@ -1,0 +1,50 @@
+services:
+  db:
+    image: postgres
+    container_name: quizz_db
+    ports:
+      - "127.0.0.1:5432:5432"
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    restart:
+        unless-stopped
+
+    volumes:
+      - db_data:/var/lib/postgresql
+    networks:
+        - quizz_network
+
+
+  web:
+    build: .
+    container_name: api_quizz
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    restart:
+        unless-stopped
+    volumes:
+      - ./media:/app/media
+    command: ["gunicorn", "core.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]
+    networks:
+        - quizz_network
+
+volumes:
+  db_data:
+
+networks:
+  quizz_network:
+    driver: bridge
