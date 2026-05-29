@@ -157,6 +157,8 @@ class AttemptFlowTests(TestCase):
         self.assertContains(response, "Incorrecta")
         self.assertContains(response, "Capital de Francia")
         self.assertContains(response, "Números pares")
+        self.assertContains(response, "Volver a intentarlo")
+        self.assertContains(response, reverse("attempts:start", args=[quiz.id]))
 
 
 class AttemptAdminFiltersTests(TestCase):

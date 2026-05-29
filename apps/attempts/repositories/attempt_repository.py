@@ -24,7 +24,9 @@ class AttemptRepository:
 
     def detail_for_user(self, attempt_id, user_id):
         return QuizAttempt.objects.filter(pk=attempt_id, user_id=user_id).prefetch_related(
-            "answers__question", "answers__selected_options__question_option"
+            "answers__question",
+            "answers__question__options",
+            "answers__selected_options__question_option",
         ).first()
 
     def admin_list(self, user_q=None, quiz_q=None):

@@ -1,5 +1,333 @@
 {% extends "base.html" %}
+
+{% block title %}Revisión · {{ attempt.quiz.name }}{% endblock %}
+
+{% block extra_head %}
+  <style>
+    .review-page {
+      display: grid;
+      gap: 30px;
+      max-width: 940px;
+      margin: 0 auto;
+    }
+
+    .review-hero {
+      display: grid;
+      gap: 16px;
+      padding-top: clamp(10px, 2vw, 20px);
+    }
+
+    .review-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 0.94rem;
+      width: fit-content;
+    }
+
+    .review-back:hover { color: var(--accent); }
+
+    .review-eyebrow {
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.28em;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+
+    .review-title {
+      margin: 0;
+      font-family: "Cormorant Garamond", serif;
+      font-size: clamp(2.9rem, 6vw, 4.3rem);
+      line-height: 0.96;
+      letter-spacing: -0.05em;
+      font-weight: 600;
+      max-width: 11ch;
+    }
+
+    .review-description {
+      margin: 0;
+      max-width: 60ch;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 1rem;
+    }
+
+    .review-summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .summary-card {
+      padding: 18px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(252,247,240,0.9));
+      box-shadow: 0 16px 38px rgba(88, 58, 34, 0.05);
+    }
+
+    .summary-card__label {
+      color: #8b755f;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: 0.68rem;
+    }
+
+    .summary-card__value {
+      margin-top: 8px;
+      font-family: "Cormorant Garamond", serif;
+      font-size: 2rem;
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+
+    .review-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .review-button,
+    .review-button--ghost {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 46px;
+      padding: 0 20px;
+      border-radius: 999px;
+      font-weight: 700;
+      transition: transform 180ms ease, background 180ms ease;
+    }
+
+    .review-button {
+      background: var(--accent);
+      color: #fff8f3;
+      box-shadow: 0 14px 26px rgba(152, 55, 31, 0.18);
+    }
+
+    .review-button:hover {
+      background: var(--accent-dark);
+      transform: translateY(-1px);
+    }
+
+    .review-button--ghost {
+      color: var(--accent);
+      background: rgba(152, 55, 31, 0.08);
+    }
+
+    .review-button--ghost:hover {
+      background: rgba(152, 55, 31, 0.14);
+      transform: translateY(-1px);
+    }
+
+    .review-answers {
+      display: grid;
+      gap: 18px;
+    }
+
+    .answer-card {
+      padding: 22px;
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      border-left: 4px solid #c73f2f;
+      background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(252,247,240,0.9));
+      box-shadow: 0 18px 42px rgba(88, 58, 34, 0.05);
+      display: grid;
+      gap: 16px;
+    }
+
+    .answer-card--correct { border-left-color: #2d8a4f; }
+
+    .answer-card__header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .answer-card__title {
+      margin: 0;
+      font-family: "Cormorant Garamond", serif;
+      font-size: 1.8rem;
+      line-height: 1.12;
+      letter-spacing: -0.03em;
+      font-weight: 600;
+    }
+
+    .answer-card__status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      white-space: nowrap;
+      background: rgba(199, 63, 47, 0.1);
+      color: #a53b2f;
+    }
+
+    .answer-card--correct .answer-card__status {
+      background: rgba(45, 138, 79, 0.12);
+      color: #2d8a4f;
+    }
+
+    .answer-card__meta {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .answer-card__image {
+      max-width: 420px;
+      width: 100%;
+      border-radius: 16px;
+      border: 1px solid rgba(116, 84, 56, 0.12);
+      display: block;
+    }
+
+    .answer-section {
+      display: grid;
+      gap: 8px;
+    }
+
+    .answer-section__label {
+      color: #8b755f;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: 0.7rem;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 0 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(116, 84, 56, 0.12);
+      background: rgba(255,255,255,0.74);
+      color: var(--text);
+      font-size: 0.92rem;
+    }
+
+    .chip--selected { background: rgba(152, 55, 31, 0.1); border-color: rgba(152, 55, 31, 0.18); }
+    .chip--correct { background: rgba(45, 138, 79, 0.12); border-color: rgba(45, 138, 79, 0.2); color: #23673a; }
+    .chip--missed { background: rgba(199, 63, 47, 0.1); border-color: rgba(199, 63, 47, 0.18); color: #a53b2f; }
+
+    .answer-card__explanation {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 0.96rem;
+    }
+
+    @media (max-width: 860px) {
+      .review-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 640px) {
+      .review-summary { grid-template-columns: 1fr; }
+      .answer-card__header { flex-direction: column; }
+      .review-actions { display: grid; }
+      .review-button, .review-button--ghost { width: 100%; }
+    }
+  </style>
+{% endblock %}
+
 {% block content %}
-<h1>Resultado</h1><p>Puntaje: {{ attempt.score }} / {{ attempt.total_score }}</p>
-<ul>{% for a in attempt.answers.all %}<li>{{ a.question.statement|default:"Pregunta con imagen" }} - {% if a.is_correct %}Correcta{% else %}Incorrecta{% endif %}</li>{% endfor %}</ul>
+  <section class="review-page">
+    <header class="review-hero">
+      <a class="review-back" href="/attempts/history/">← Volver al historial</a>
+      <span class="review-eyebrow">Revisión</span>
+      <h1 class="review-title">{{ attempt.quiz.name }}</h1>
+      <p class="review-description">
+        {{ attempt.quiz.description|default:"Revisá pregunta por pregunta qué marcaste, cuáles eran correctas y cómo quedó tu puntaje final." }}
+      </p>
+    </header>
+
+    <section class="review-summary" aria-label="Resumen del intento">
+      <article class="summary-card">
+        <div class="summary-card__label">Puntaje</div>
+        <div class="summary-card__value">{{ attempt.score }} / {{ attempt.total_score }}</div>
+      </article>
+      <article class="summary-card">
+        <div class="summary-card__label">Materia</div>
+        <div class="summary-card__value">{{ attempt.quiz.subject.name }}</div>
+      </article>
+      <article class="summary-card">
+        <div class="summary-card__label">Inicio</div>
+        <div class="summary-card__value">{{ attempt.started_at|date:"d/m" }}</div>
+      </article>
+      <article class="summary-card">
+        <div class="summary-card__label">Estado</div>
+        <div class="summary-card__value">{% if attempt.finished_at %}Finalizado{% else %}En curso{% endif %}</div>
+      </article>
+    </section>
+
+    <div class="review-actions">
+      <a class="review-button" href="/attempts/start/{{ attempt.quiz.id }}/">Volver a intentarlo</a>
+      <a class="review-button--ghost" href="/quizzes/">Ver más quizzes</a>
+    </div>
+
+    <section class="review-answers" aria-label="Revisión de respuestas">
+      {% for a in attempt.answers.all %}
+        <article class="answer-card {% if a.is_correct %}answer-card--correct{% endif %}">
+          <div class="answer-card__header">
+            <div>
+              <h2 class="answer-card__title">{{ a.question.statement|default:"Pregunta visual" }}</h2>
+              <div class="answer-card__meta">
+                <span>Pregunta {{ a.question.position }}</span>
+                <span>{{ a.score_obtained }} puntos</span>
+              </div>
+            </div>
+            <span class="answer-card__status">{% if a.is_correct %}Correcta{% else %}Incorrecta{% endif %}</span>
+          </div>
+
+          {% if a.question.image %}
+            <img class="answer-card__image" src="{{ a.question.image.url }}" alt="Imagen de apoyo de la pregunta {{ a.question.position }}">
+          {% endif %}
+
+          <div class="answer-section">
+            <span class="answer-section__label">Tu respuesta</span>
+            <div class="chips">
+              {% for selected in a.selected_options.all %}
+                <span class="chip chip--selected">{{ selected.question_option.text }}</span>
+              {% empty %}
+                <span class="chip">Sin respuesta</span>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="answer-section">
+            <span class="answer-section__label">Opciones correctas</span>
+            <div class="chips">
+              {% for option in a.question.options.all %}
+                {% if option.is_correct %}
+                  <span class="chip {% if a.is_correct %}chip--correct{% else %}chip--missed{% endif %}">{{ option.text }}</span>
+                {% endif %}
+              {% endfor %}
+            </div>
+          </div>
+
+          {% if a.question.explanation %}
+            <div class="answer-section">
+              <span class="answer-section__label">Explicación</span>
+              <p class="answer-card__explanation">{{ a.question.explanation }}</p>
+            </div>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </section>
+  </section>
 {% endblock %}
