@@ -1,16 +1,337 @@
 {% extends "base.html" %}
+
+{% block title %}{{ attempt.quiz.name }} · Preguntero{% endblock %}
+
+{% block extra_head %}
+  <style>
+    .attempt-page {
+      display: grid;
+      gap: 28px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .attempt-hero {
+      display: grid;
+      gap: 16px;
+      padding-top: clamp(10px, 2vw, 20px);
+    }
+
+    .attempt-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 0.94rem;
+      width: fit-content;
+    }
+
+    .attempt-back:hover {
+      color: var(--accent);
+    }
+
+    .attempt-eyebrow {
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.28em;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+
+    .attempt-title {
+      margin: 0;
+      font-family: "Cormorant Garamond", serif;
+      font-size: clamp(3rem, 6vw, 4.6rem);
+      line-height: 0.96;
+      letter-spacing: -0.05em;
+      font-weight: 600;
+      max-width: 10ch;
+    }
+
+    .attempt-description {
+      margin: 0;
+      max-width: 58ch;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 1rem;
+    }
+
+    .attempt-progress {
+      display: grid;
+      gap: 12px;
+      padding: 14px 0 0;
+      border-top: 1px solid rgba(116, 84, 56, 0.12);
+    }
+
+    .attempt-progress__meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .attempt-progress__bar {
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(116, 84, 56, 0.12);
+      overflow: hidden;
+    }
+
+    .attempt-progress__fill {
+      height: 100%;
+      width: 0;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #bb4a2c, #d9b286);
+      transition: width 220ms ease;
+    }
+
+    .attempt-form {
+      display: grid;
+      gap: 20px;
+    }
+
+    .question-card {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(252,247,240,0.9));
+      box-shadow: 0 18px 42px rgba(88, 58, 34, 0.05);
+      padding: 20px;
+    }
+
+    .question-card__header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .question-card__title {
+      margin: 0;
+      font-family: "Cormorant Garamond", serif;
+      font-size: 1.7rem;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      font-weight: 600;
+    }
+
+    .question-card__type {
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: 0.72rem;
+      white-space: nowrap;
+      padding-top: 4px;
+    }
+
+    .question-card__image {
+      width: 100%;
+      max-width: 420px;
+      border-radius: 16px;
+      border: 1px solid rgba(116, 84, 56, 0.12);
+      margin-bottom: 18px;
+      display: block;
+    }
+
+    .question-options {
+      display: grid;
+      gap: 8px;
+    }
+
+    .question-option {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(151, 126, 104, 0.3);
+      background: rgba(247, 241, 231, 0.68);
+      cursor: pointer;
+      transition: border-color 180ms ease, background 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+    }
+
+    .question-option:hover {
+      transform: translateY(-1px);
+      border-color: rgba(152, 55, 31, 0.28);
+      box-shadow: 0 12px 24px rgba(88, 58, 34, 0.05);
+    }
+
+    .question-option input {
+      margin: 0;
+      accent-color: var(--accent);
+      inline-size: 17px;
+      block-size: 17px;
+      flex: 0 0 auto;
+    }
+
+    .question-option__text {
+      color: var(--text);
+      line-height: 1.45;
+    }
+
+    .attempt-submitbar {
+      position: sticky;
+      bottom: 14px;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 8px;
+      padding: 14px 16px;
+      border: 1px solid rgba(116, 84, 56, 0.12);
+      border-radius: 20px;
+      background: rgba(255, 252, 247, 0.92);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 18px 42px rgba(88, 58, 34, 0.08);
+    }
+
+    .attempt-submitbar__meta {
+      display: grid;
+      gap: 2px;
+    }
+
+    .attempt-submitbar__title {
+      margin: 0;
+      font-family: "Cormorant Garamond", serif;
+      font-size: 1.5rem;
+      letter-spacing: -0.03em;
+    }
+
+    .attempt-submitbar__hint {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .attempt-submitbar__button {
+      min-height: 46px;
+      padding: 0 22px;
+      border: 0;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #fff8f3;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 16px 28px rgba(152, 55, 31, 0.18);
+      transition: transform 180ms ease, background 180ms ease;
+    }
+
+    .attempt-submitbar__button:hover {
+      background: var(--accent-dark);
+      transform: translateY(-1px);
+    }
+
+    @media (max-width: 720px) {
+      .question-card__header,
+      .attempt-submitbar {
+        flex-direction: column;
+        align-items: start;
+      }
+
+      .attempt-submitbar {
+        bottom: 8px;
+      }
+
+      .attempt-submitbar__button {
+        width: 100%;
+      }
+    }
+  </style>
+{% endblock %}
+
 {% block content %}
-<h1>{{ attempt.quiz.name }}</h1>
-<form method="post" action="/attempts/submit/{{ attempt.id }}/">{% csrf_token %}
-{% for q in questions %}
-<fieldset><legend>{{ q.position }}. {{ q.statement }}</legend>
-{% if q.image %}<img src="{{ q.image.url }}" style="max-width:250px"/>{% endif %}
-{% for o in q.options.all %}
-<label>
-  <input type="{% if q.question_type == 'single_choice' %}radio{% else %}checkbox{% endif %}" name="question_{{ q.id }}" value="{{ o.id }}">{{ o.text }}
-</label><br>
-{% endfor %}
-</fieldset>
-{% endfor %}
-<button type="submit">Finalizar</button></form>
+  <section class="attempt-page">
+    <header class="attempt-hero">
+      <a class="attempt-back" href="/quizzes/">← {{ attempt.quiz.subject.name }}</a>
+      <span class="attempt-eyebrow">Cuestionario</span>
+      <h1 class="attempt-title">{{ attempt.quiz.name }}</h1>
+      <p class="attempt-description">
+        {% if attempt.quiz.description %}
+          {{ attempt.quiz.description }}
+        {% else %}
+          Respondé cada pregunta y enviá tu intento cuando termines para obtener el puntaje final.
+        {% endif %}
+      </p>
+
+      <div class="attempt-progress" aria-label="Progreso del cuestionario">
+        <div class="attempt-progress__meta">
+          <span><strong id="answered-count">0</strong> de {{ questions|length }} respuestas</span>
+          <span>Intento en curso</span>
+        </div>
+        <div class="attempt-progress__bar">
+          <div class="attempt-progress__fill" id="attempt-progress-fill"></div>
+        </div>
+      </div>
+    </header>
+
+    <form class="attempt-form" method="post" action="/attempts/submit/{{ attempt.id }}/">
+      {% csrf_token %}
+      {% for q in questions %}
+        <fieldset class="question-card" data-question-id="{{ q.id }}">
+          <div class="question-card__header">
+            <legend class="question-card__title">{{ q.position }}. {{ q.statement|default:"Pregunta visual" }}</legend>
+            <span class="question-card__type">
+              {% if q.question_type == 'single_choice' %}
+                Opción única
+              {% else %}
+                Opción múltiple
+              {% endif %}
+            </span>
+          </div>
+
+          {% if q.image %}
+            <img class="question-card__image" src="{{ q.image.url }}" alt="Imagen de apoyo para la pregunta {{ q.position }}">
+          {% endif %}
+
+          <div class="question-options">
+            {% for o in q.options.all %}
+              <label class="question-option">
+                <input
+                  type="{% if q.question_type == 'single_choice' %}radio{% else %}checkbox{% endif %}"
+                  name="question_{{ q.id }}"
+                  value="{{ o.id }}"
+                >
+                <span class="question-option__text">{{ o.text }}</span>
+              </label>
+            {% endfor %}
+          </div>
+        </fieldset>
+      {% endfor %}
+
+      <div class="attempt-submitbar">
+        <div class="attempt-submitbar__meta">
+          <p class="attempt-submitbar__title">Enviar respuestas</p>
+          <span class="attempt-submitbar__hint">Podés revisar antes de finalizar. El puntaje se calcula al instante.</span>
+        </div>
+        <button class="attempt-submitbar__button" type="submit">Finalizar intento</button>
+      </div>
+    </form>
+  </section>
+
+  <script>
+    (() => {
+      const totalQuestions = {{ questions|length }};
+      const fill = document.getElementById("attempt-progress-fill");
+      const answered = document.getElementById("answered-count");
+      const inputs = Array.from(document.querySelectorAll('.attempt-form input[type="radio"], .attempt-form input[type="checkbox"]'));
+
+      const refreshProgress = () => {
+        const names = new Set();
+        inputs.forEach((input) => {
+          if (input.checked) names.add(input.name);
+        });
+
+        const answeredCount = names.size;
+        const percentage = totalQuestions ? (answeredCount / totalQuestions) * 100 : 0;
+
+        answered.textContent = answeredCount;
+        fill.style.width = `${percentage}%`;
+      };
+
+      inputs.forEach((input) => input.addEventListener('change', refreshProgress));
+      refreshProgress();
+    })();
+  </script>
 {% endblock %}

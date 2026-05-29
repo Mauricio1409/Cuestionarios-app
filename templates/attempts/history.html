@@ -1,1 +1,249 @@
-{% extends "base.html" %}{% block content %}<h1>Historial</h1><ul>{% for a in attempts %}<li>{{ a.quiz.name }} - {{ a.score }}/{{ a.total_score }} <a href="/attempts/{{ a.id }}/">ver</a></li>{% endfor %}</ul>{% endblock %}
+{% extends "base.html" %}
+
+{% block title %}Historial · Preguntero{% endblock %}
+
+{% block extra_head %}
+  <style>
+    .history-page {
+      display: grid;
+      gap: 34px;
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    .history-hero {
+      display: grid;
+      gap: 16px;
+      padding-top: clamp(10px, 2vw, 20px);
+    }
+
+    .history-eyebrow {
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.28em;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+
+    .history-title {
+      margin: 0;
+      font-family: "Cormorant Garamond", serif;
+      font-size: clamp(2.9rem, 6vw, 4.4rem);
+      line-height: 0.95;
+      letter-spacing: -0.05em;
+      font-weight: 600;
+      max-width: 11ch;
+    }
+
+    .history-description {
+      margin: 0;
+      max-width: 60ch;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 1rem;
+    }
+
+    .history-list {
+      display: grid;
+      gap: 16px;
+    }
+
+    .history-card {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) auto auto;
+      gap: 18px;
+      align-items: center;
+      width: 100%;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--accent);
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(252,247,240,0.9));
+      box-shadow: 0 18px 42px rgba(88, 58, 34, 0.06);
+    }
+
+    .history-card:nth-child(3n + 2) {
+      border-left-color: #23837a;
+    }
+
+    .history-card:nth-child(3n) {
+      border-left-color: #379a50;
+    }
+
+    .history-card__content {
+      display: grid;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .history-card__meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 16px;
+      color: #8b755f;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-size: 0.72rem;
+    }
+
+    .history-card__title {
+      margin: 0;
+      font-family: "Cormorant Garamond", serif;
+      font-size: 2rem;
+      line-height: 1;
+      letter-spacing: -0.04em;
+      font-weight: 600;
+    }
+
+    .history-card__subtitle {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 0.97rem;
+    }
+
+    .history-card__score {
+      display: grid;
+      justify-items: center;
+      gap: 4px;
+      min-width: 132px;
+      padding: 14px 18px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.66);
+      border: 1px solid rgba(116, 84, 56, 0.1);
+    }
+
+    .history-card__score-label {
+      color: #8b755f;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: 0.68rem;
+    }
+
+    .history-card__score-value {
+      font-family: "Cormorant Garamond", serif;
+      font-size: 2rem;
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+
+    .history-card__actions {
+      display: grid;
+      gap: 10px;
+      justify-items: end;
+      min-width: 190px;
+    }
+
+    .history-card__button,
+    .history-card__button--ghost {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 0 18px;
+      border-radius: 999px;
+      font-weight: 700;
+      transition: transform 180ms ease, background 180ms ease, color 180ms ease;
+    }
+
+    .history-card__button {
+      background: var(--accent);
+      color: #fff8f3;
+      box-shadow: 0 14px 26px rgba(152, 55, 31, 0.18);
+    }
+
+    .history-card__button:hover {
+      background: var(--accent-dark);
+      transform: translateY(-1px);
+    }
+
+    .history-card__button--ghost {
+      color: var(--accent);
+      background: rgba(152, 55, 31, 0.08);
+    }
+
+    .history-card__button--ghost:hover {
+      background: rgba(152, 55, 31, 0.14);
+      transform: translateY(-1px);
+    }
+
+    .history-empty {
+      padding: 30px 24px;
+      border: 1px dashed rgba(116, 84, 56, 0.24);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.45);
+      color: var(--muted);
+    }
+
+    @media (max-width: 900px) {
+      .history-card {
+        grid-template-columns: 1fr;
+      }
+
+      .history-card__score,
+      .history-card__actions {
+        justify-items: start;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .history-card__actions {
+        width: 100%;
+      }
+
+      .history-card__button,
+      .history-card__button--ghost {
+        width: 100%;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <section class="history-page">
+    <header class="history-hero">
+      <span class="history-eyebrow">Tu progreso</span>
+      <h1 class="history-title">Historial de intentos y revisiones.</h1>
+      <p class="history-description">
+        Revisá tus resultados, compará puntajes y retomá cualquier cuestionario cuando quieras.
+      </p>
+    </header>
+
+    {% if attempts %}
+      <div class="history-list">
+        {% for a in attempts %}
+          <article class="history-card">
+            <div class="history-card__content">
+              <div class="history-card__meta">
+                <span>{{ a.quiz.subject.name }}</span>
+                <span>Intento del {{ a.started_at|date:"d/m/Y" }}</span>
+                {% if a.finished_at %}<span>Finalizado {{ a.finished_at|date:"H:i" }}</span>{% else %}<span>En curso</span>{% endif %}
+              </div>
+
+              <h2 class="history-card__title">{{ a.quiz.name }}</h2>
+              <p class="history-card__subtitle">
+                {% if a.quiz.description %}
+                  {{ a.quiz.description }}
+                {% else %}
+                  Revisá este intento o volvé a resolver el cuestionario para mejorar tu resultado.
+                {% endif %}
+              </p>
+            </div>
+
+            <div class="history-card__score">
+              <span class="history-card__score-label">Puntaje</span>
+              <strong class="history-card__score-value">{{ a.score }} / {{ a.total_score }}</strong>
+            </div>
+
+            <div class="history-card__actions">
+              <a class="history-card__button" href="/attempts/{{ a.id }}/">Revisar intento</a>
+              <a class="history-card__button--ghost" href="/attempts/start/{{ a.quiz.id }}/">Volver a intentarlo</a>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="history-empty">Todavía no resolviste ningún cuestionario. Cuando completes uno, va a aparecer acá.</div>
+    {% endif %}
+  </section>
+{% endblock %}

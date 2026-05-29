@@ -90,6 +90,18 @@ class AttemptFlowTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(attempts, [own_attempt])
 
+    def test_history_exposes_review_and_retry_actions(self):
+        quiz, *_ = self._build_quiz_with_questions(is_active=True)
+        attempt = QuizAttempt.objects.create(user=self.user, quiz=quiz, score=Decimal("1.00"), total_score=Decimal("3.00"))
+
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("attempts:history"))
+
+        self.assertContains(response, reverse("attempts:detail", args=[attempt.id]))
+        self.assertContains(response, reverse("attempts:start", args=[quiz.id]))
+        self.assertContains(response, "Revisar intento")
+        self.assertContains(response, "Volver a intentarlo")
+
     def test_take_attempt_renders_questions_ordered_by_position(self):
         quiz = Quiz.objects.create(subject=self.subject, name="Orden", is_active=True)
         q2 = Question.objects.create(
