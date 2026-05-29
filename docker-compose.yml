@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres
-    container_name: quizz_db
+    container_name: quiz_db
     ports:
       - "127.0.0.1:5432:5432"
     environment:
@@ -26,7 +26,7 @@ services:
 
   web:
     build: .
-    container_name: api_quizz
+    container_name: api_quiz
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:
@@ -40,11 +40,11 @@ services:
       - ./media:/app/media
     command: ["gunicorn", "core.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]
     networks:
-        - quizz_network
+        - quiz_network
 
 volumes:
   db_data:
 
 networks:
-  quizz_network:
+  quiz_network:
     driver: bridge
