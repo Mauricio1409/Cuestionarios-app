@@ -78,6 +78,33 @@
       white-space: nowrap;
     }
 
+    .subjects-section__header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .subjects-section__create {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 16px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #fff8f3;
+      font-weight: 700;
+      box-shadow: 0 12px 24px rgba(152, 55, 31, 0.16);
+      transition: transform 180ms ease, background 180ms ease;
+    }
+
+    .subjects-section__create:hover {
+      background: var(--accent-dark);
+      transform: translateY(-1px);
+    }
+
     .subjects-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -153,16 +180,50 @@
       font-size: 0.96rem;
     }
 
-    .subject-card__link {
-      position: absolute;
-      inset: 0;
-      z-index: 1;
-    }
-
     .subject-card__footer {
       margin-top: auto;
-      color: #9c8b7b;
-      font-size: 0.82rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .subject-card__cta,
+    .subject-card__action,
+    .subject-card__delete {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      padding: 0 14px;
+      border-radius: 999px;
+      font-size: 0.86rem;
+      font-weight: 700;
+    }
+
+    .subject-card__cta {
+      background: rgba(152, 55, 31, 0.08);
+      color: var(--accent);
+    }
+
+    .subject-card__action {
+      background: rgba(35, 131, 122, 0.1);
+      color: #1b6d65;
+    }
+
+    .subject-card__delete {
+      border: 0;
+      cursor: pointer;
+      background: rgba(199, 63, 47, 0.1);
+      color: #a53b2f;
+      font: inherit;
+    }
+
+    .subject-card__footer-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
     }
 
     .subjects-empty {
@@ -210,7 +271,12 @@
     <section class="subjects-section" aria-labelledby="subjects-title">
       <div class="subjects-section__header">
         <h2 id="subjects-title" class="subjects-section__title">Materias</h2>
-        <span class="subjects-section__meta">{{ subjects|length }} disponibles</span>
+        <div class="subjects-section__header-right">
+          <span class="subjects-section__meta">{{ subjects|length }} disponibles</span>
+          {% if user.is_staff %}
+            <a class="subjects-section__create" href="{% url 'catalog:subject-create' %}">Nueva materia</a>
+          {% endif %}
+        </div>
       </div>
 
       {% if subjects %}
@@ -235,8 +301,19 @@
                 </p>
               </div>
 
-              <div class="subject-card__footer">Ver quizzes disponibles</div>
-              <a class="subject-card__link" href="/quizzes/" aria-label="Ver quizzes de {{ s.name }}"></a>
+              <div class="subject-card__footer">
+                <a class="subject-card__cta" href="/quizzes/">Ver quizzes disponibles</a>
+
+                {% if user.is_staff %}
+                  <div class="subject-card__footer-actions">
+                    <a class="subject-card__action" href="{% url 'catalog:subject-edit' s.id %}">Editar</a>
+                    <form method="post" action="{% url 'catalog:subject-delete' s.id %}" onsubmit="return confirm('¿Eliminar la materia {{ s.name|escapejs }}?');">
+                      {% csrf_token %}
+                      <button class="subject-card__delete" type="submit">Eliminar</button>
+                    </form>
+                  </div>
+                {% endif %}
+              </div>
             </article>
           {% endfor %}
         </div>
