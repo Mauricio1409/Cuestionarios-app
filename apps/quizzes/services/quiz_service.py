@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from apps.quizzes.repositories.quiz_repository import QuizRepository
 from apps.quizzes.repositories.question_repository import QuestionOptionRepository, QuestionRepository
 from apps.quizzes.models import QuestionType
@@ -46,6 +47,7 @@ class QuestionOptionService:
         self.question_repo = QuestionRepository()
         self.domain = QuestionDomainService()
 
+    @transaction.atomic
     def validate_and_persist_option(self, question, data, option=None):
         obj = self.option_repo.update(option, **data) if option else self.option_repo.create(question=question, **data)
         options = list(self.option_repo.by_question(question.id))
@@ -57,6 +59,41 @@ class QuestionOptionService:
         if not question:
             raise ValidationError("Pregunta no encontrada.")
         return self.validate_and_persist_option(question, data)
+
+    def list_for_question(self, question_id):
+        question = self.question_repo.get(question_id)
+        if not question:
+            raise ValidationError("Pregunta no encontrada.")
+        return question, self.option_repo.by_question(question_id)
+
+    def get_option(self, option_id):
+        option = self.option_repo.get(option_id)
+        if not option:
+            raise ValidationError("Opción no encontrada.")
+        return option
+
+    def update_option(self, option_id, data):
+        option = self.get_option(option_id)
+        return self.validate_and_persist_option(option.question, data, option=option)
+
+    @transaction.atomic
+    def delete_option(self, option_id):
+        option = self.get_option(option_id)
+        question = option.question
+        option_data = {
+            "text": option.text,
+            "is_correct": option.is_correct,
+            "position": option.position,
+        }
+        question_id = question.id
+        self.option_repo.delete(option)
+        options = list(self.option_repo.by_question(question.id))
+        try:
+            self.domain.validate_correct_options(question, options)
+        except ValidationError:
+            self.option_repo.create(question=question, **option_data)
+            raise
+        return question_id
 
 
 class QuizAdminService:

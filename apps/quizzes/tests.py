@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
 
-from apps.quizzes.models import Quiz, Question, QuestionType
+from apps.quizzes.models import Quiz, Question, QuestionOption, QuestionType
 from apps.quizzes.services.quiz_service import QuestionDomainService
 from apps.subjects.models import Subject
 from apps.users.models import User
@@ -144,6 +144,82 @@ class QuizCatalogAndAdminAccessTests(TestCase):
 
         self.assertRedirects(response, reverse("admin-ui:question-list", args=[quiz.id]))
         self.assertFalse(Question.objects.filter(id=question.id).exists())
+
+    def test_staff_can_view_option_list_for_question(self):
+        quiz = Quiz.objects.create(subject=self.subject, name="Parcial 1", is_active=True)
+        question = Question.objects.create(
+            quiz=quiz,
+            statement="Q1",
+            question_type=QuestionType.SINGLE_CHOICE,
+            score="1.00",
+            position=1,
+        )
+        option = QuestionOption.objects.create(question=question, text="A", is_correct=True, position=1)
+
+        self.client.force_login(self.staff)
+        response = self.client.get(reverse("admin-ui:option-list", args=[question.id]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, option.text)
+
+    def test_staff_can_edit_option(self):
+        quiz = Quiz.objects.create(subject=self.subject, name="Parcial 1", is_active=True)
+        question = Question.objects.create(
+            quiz=quiz,
+            statement="Q1",
+            question_type=QuestionType.SINGLE_CHOICE,
+            score="1.00",
+            position=1,
+        )
+        option = QuestionOption.objects.create(question=question, text="A", is_correct=True, position=1)
+        QuestionOption.objects.create(question=question, text="B", is_correct=False, position=2)
+
+        self.client.force_login(self.staff)
+        response = self.client.post(
+            reverse("admin-ui:option-edit", args=[option.id]),
+            {"text": "A editada", "is_correct": True, "position": 3},
+        )
+
+        self.assertRedirects(response, reverse("admin-ui:option-list", args=[question.id]))
+        option.refresh_from_db()
+        self.assertEqual(option.text, "A editada")
+        self.assertEqual(option.position, 3)
+
+    def test_staff_can_delete_option_when_domain_stays_valid(self):
+        quiz = Quiz.objects.create(subject=self.subject, name="Parcial 1", is_active=True)
+        question = Question.objects.create(
+            quiz=quiz,
+            statement="Q1",
+            question_type=QuestionType.MULTIPLE_CHOICE,
+            score="1.00",
+            position=1,
+        )
+        QuestionOption.objects.create(question=question, text="A", is_correct=True, position=1)
+        option = QuestionOption.objects.create(question=question, text="B", is_correct=False, position=2)
+
+        self.client.force_login(self.staff)
+        response = self.client.post(reverse("admin-ui:option-delete", args=[option.id]))
+
+        self.assertRedirects(response, reverse("admin-ui:option-list", args=[question.id]))
+        self.assertFalse(QuestionOption.objects.filter(id=option.id).exists())
+
+    def test_staff_cannot_delete_last_valid_option_if_breaks_rules(self):
+        quiz = Quiz.objects.create(subject=self.subject, name="Parcial 1", is_active=True)
+        question = Question.objects.create(
+            quiz=quiz,
+            statement="Q1",
+            question_type=QuestionType.SINGLE_CHOICE,
+            score="1.00",
+            position=1,
+        )
+        option = QuestionOption.objects.create(question=question, text="A", is_correct=True, position=1)
+
+        self.client.force_login(self.staff)
+        response = self.client.post(reverse("admin-ui:option-delete", args=[option.id]), follow=True)
+
+        self.assertRedirects(response, reverse("admin-ui:quiz-list"))
+        self.assertTrue(QuestionOption.objects.filter(id=option.id).exists())
+        self.assertContains(response, "exactamente una opción correcta")
 
     def test_non_image_upload_is_rejected(self):
         quiz = Quiz.objects.create(subject=self.subject, name="Con imágenes", is_active=True)

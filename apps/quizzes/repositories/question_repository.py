@@ -3,10 +3,10 @@ from apps.quizzes.models import Question, QuestionOption
 
 class QuestionRepository:
     def by_quiz(self, quiz_id: int):
-        return Question.objects.filter(quiz_id=quiz_id).order_by("position", "id")
+        return Question.objects.filter(quiz_id=quiz_id).prefetch_related("options").order_by("position", "id")
 
     def get(self, pk: int):
-        return Question.objects.filter(pk=pk).first()
+        return Question.objects.prefetch_related("options", "quiz", "quiz__subject").filter(pk=pk).first()
 
     def create(self, **data):
         return Question.objects.create(**data)
@@ -23,10 +23,10 @@ class QuestionRepository:
 
 class QuestionOptionRepository:
     def by_question(self, question_id: int):
-        return QuestionOption.objects.filter(question_id=question_id).order_by("position", "id")
+        return QuestionOption.objects.filter(question_id=question_id).select_related("question", "question__quiz", "question__quiz__subject").order_by("position", "id")
 
     def get(self, pk: int):
-        return QuestionOption.objects.filter(pk=pk).first()
+        return QuestionOption.objects.select_related("question", "question__quiz", "question__quiz__subject").filter(pk=pk).first()
 
     def create(self, **data):
         return QuestionOption.objects.create(**data)

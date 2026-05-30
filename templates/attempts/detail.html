@@ -224,6 +224,7 @@
     .chip--selected { background: rgba(152, 55, 31, 0.1); border-color: rgba(152, 55, 31, 0.18); }
     .chip--correct { background: rgba(45, 138, 79, 0.12); border-color: rgba(45, 138, 79, 0.2); color: #23673a; }
     .chip--missed { background: rgba(199, 63, 47, 0.1); border-color: rgba(199, 63, 47, 0.18); color: #a53b2f; }
+    .chip--neutral { background: rgba(255,255,255,0.74); }
 
     .answer-card__explanation {
       margin: 0;
@@ -281,7 +282,7 @@
     </div>
 
     <section class="review-answers" aria-label="Revisión de respuestas">
-      {% for a in attempt.answers.all %}
+      {% for a in ordered_answers %}
         <article class="answer-card {% if a.is_correct %}answer-card--correct{% endif %}">
           <div class="answer-card__header">
             <div>
@@ -299,6 +300,17 @@
           {% endif %}
 
           <div class="answer-section">
+            <span class="answer-section__label">Opciones en el orden del intento</span>
+            <div class="chips">
+              {% for option in a.review_options %}
+                <span class="chip {% if option.is_selected and option.is_correct %}chip--correct{% elif option.is_selected %}chip--selected{% elif option.is_correct %}chip--missed{% else %}chip--neutral{% endif %}">{{ option.text }}</span>
+              {% empty %}
+                <span class="chip">Sin opciones</span>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="answer-section">
             <span class="answer-section__label">Tu respuesta</span>
             <div class="chips">
               {% for selected in a.selected_options.all %}
@@ -312,7 +324,7 @@
           <div class="answer-section">
             <span class="answer-section__label">Opciones correctas</span>
             <div class="chips">
-              {% for option in a.question.options.all %}
+              {% for option in a.review_options %}
                 {% if option.is_correct %}
                   <span class="chip {% if a.is_correct %}chip--correct{% else %}chip--missed{% endif %}">{{ option.text }}</span>
                 {% endif %}

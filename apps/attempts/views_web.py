@@ -19,8 +19,9 @@ def start_attempt(request, quiz_id):
 
 @login_required
 def take_attempt(request, attempt_id):
-    attempt = AttemptService().get_user_attempt_or_404(request.user.id, attempt_id)
-    questions = attempt.quiz.questions.prefetch_related("options").order_by("position")
+    service = AttemptService()
+    attempt = service.get_user_attempt_or_404(request.user.id, attempt_id)
+    questions = service.questions_for_attempt_display(attempt)
     return render(request, "attempts/take.html", {"attempt": attempt, "questions": questions})
 
 
@@ -40,11 +41,13 @@ def history_view(request):
 
 @login_required
 def attempt_detail(request, attempt_id):
-    attempt = AttemptService().detail_for_user(attempt_id, request.user.id)
+    service = AttemptService()
+    attempt = service.detail_for_user(attempt_id, request.user.id)
     if not attempt:
         messages.error(request, "No tenés permiso para ver ese intento o no existe.")
         return redirect("attempts:history")
-    return render(request, "attempts/detail.html", {"attempt": attempt})
+    ordered_answers = service.ordered_review_answers(attempt)
+    return render(request, "attempts/detail.html", {"attempt": attempt, "ordered_answers": ordered_answers})
 
 
 @login_required

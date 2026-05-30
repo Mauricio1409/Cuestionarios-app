@@ -185,6 +185,7 @@ def admin_question_delete(request, question_id):
 @login_required
 @staff_required
 def admin_option_create(request, question_id):
+    option_service = QuestionOptionService()
     try:
         question = QuizAdminService().get_question(question_id)
     except Exception as exc:
@@ -194,9 +195,9 @@ def admin_option_create(request, question_id):
     form = QuestionOptionForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         try:
-            QuestionOptionService().create_for_question(question_id, form.cleaned_data)
+            option_service.create_for_question(question_id, form.cleaned_data)
             messages.success(request, "Opción creada correctamente.")
-            return redirect("admin-ui:question-list", quiz_id=question.quiz_id)
+            return redirect("admin-ui:option-list", question_id=question_id)
         except Exception as exc:
             form.add_error(None, str(exc))
     return render(
@@ -207,6 +208,70 @@ def admin_option_create(request, question_id):
             "title": "Crear opción",
             "eyebrow": question.quiz.name,
             "description": "Cargá una opción para esta pregunta y marcá si cuenta como correcta.",
-            "cancel_url": f"/staff/quizzes/{question.quiz_id}/questions/",
+            "cancel_url": f"/staff/questions/{question_id}/options/",
         },
     )
+
+
+@login_required
+@staff_required
+def admin_option_list(request, question_id):
+    service = QuestionOptionService()
+    try:
+        question, options = service.list_for_question(question_id)
+    except Exception as exc:
+        messages.error(request, str(exc))
+        return redirect("admin-ui:quiz-list")
+
+    return render(request, "admin_ui/option_list.html", {"question": question, "options": options})
+
+
+@login_required
+@staff_required
+def admin_option_edit(request, option_id):
+    service = QuestionOptionService()
+    try:
+        option = service.get_option(option_id)
+    except Exception as exc:
+        messages.error(request, str(exc))
+        return redirect("admin-ui:quiz-list")
+
+    form = QuestionOptionForm(request.POST or None, instance=option)
+    if request.method == "POST" and form.is_valid():
+        try:
+            service.update_option(option_id, form.cleaned_data)
+            messages.success(request, "Opción actualizada correctamente.")
+            return redirect("admin-ui:option-list", question_id=option.question_id)
+        except Exception as exc:
+            form.add_error(None, str(exc))
+
+    return render(
+        request,
+        "common/form.html",
+        {
+            "form": form,
+            "title": "Editar opción",
+            "eyebrow": option.question.quiz.name,
+            "description": "Ajustá el texto, la posición o si la opción cuenta como correcta.",
+            "cancel_url": f"/staff/questions/{option.question_id}/options/",
+        },
+    )
+
+
+@login_required
+@staff_required
+def admin_option_delete(request, option_id):
+    if request.method != "POST":
+        return redirect("admin-ui:quiz-list")
+
+    service = QuestionOptionService()
+    try:
+        option = service.get_option(option_id)
+        question_id = option.question_id
+        label = option.text
+        service.delete_option(option_id)
+        messages.success(request, f"Opción eliminada: {label[:60]}.")
+        return redirect("admin-ui:option-list", question_id=question_id)
+    except Exception as exc:
+        messages.error(request, str(exc))
+        return redirect("admin-ui:quiz-list")

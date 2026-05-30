@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Opciones · Pregunta {{ question.position }}{% endblock %}
+
+{% block extra_head %}
+  <style>
+    .options-page { display:grid; gap:30px; max-width:1000px; margin:0 auto; padding-top:clamp(10px,2vw,20px); }
+    .options-hero { display:grid; gap:14px; }
+    .options-back { display:inline-flex; width:fit-content; color:var(--muted); }
+    .options-eyebrow { color:var(--accent); text-transform:uppercase; letter-spacing:.28em; font-size:.72rem; font-weight:700; }
+    .options-title { margin:0; font-family:"Cormorant Garamond",serif; font-size:clamp(2.6rem,5.2vw,3.8rem); line-height:.96; letter-spacing:-.05em; font-weight:600; max-width:14ch; }
+    .options-description { margin:0; color:var(--muted); line-height:1.7; max-width:64ch; }
+    .options-toolbar { display:flex; justify-content:space-between; align-items:center; gap:12px; padding-bottom:14px; border-bottom:1px solid rgba(116,84,56,.12); }
+    .options-toolbar__meta { color:var(--muted); text-transform:uppercase; letter-spacing:.18em; font-size:.76rem; }
+    .options-toolbar__cta { display:inline-flex; min-height:44px; padding:0 18px; border-radius:999px; align-items:center; justify-content:center; background:var(--accent); color:#fff8f3; font-weight:700; }
+    .options-list { display:grid; gap:16px; }
+    .option-card { display:grid; grid-template-columns:minmax(0,1.6fr) auto; gap:18px; align-items:center; padding:22px; border-radius:22px; border:1px solid var(--line); border-left:4px solid rgba(116,84,56,.18); background:linear-gradient(180deg,rgba(255,255,255,.94),rgba(252,247,240,.9)); box-shadow:0 18px 42px rgba(88,58,34,.06); }
+    .option-card--correct { border-left-color:#2d8a4f; }
+    .option-card__content { display:grid; gap:10px; }
+    .option-card__meta { display:flex; flex-wrap:wrap; gap:10px 16px; color:#8b755f; text-transform:uppercase; letter-spacing:.16em; font-size:.72rem; }
+    .option-card__title { margin:0; font-family:"Cormorant Garamond",serif; font-size:1.8rem; line-height:1.08; letter-spacing:-.03em; font-weight:600; }
+    .option-card__actions { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+    .oa,.oa-g,.oa-d { display:inline-flex; min-height:40px; padding:0 14px; border-radius:999px; align-items:center; justify-content:center; font-weight:700; font-size:.9rem; }
+    .oa { background:var(--accent); color:#fff8f3; }
+    .oa-g { background:rgba(35,131,122,.1); color:#1b6d65; }
+    .oa-d { border:0; cursor:pointer; font:inherit; background:rgba(199,63,47,.1); color:#a53b2f; }
+    .options-empty { padding:30px 24px; border:1px dashed rgba(116,84,56,.24); border-radius:18px; background:rgba(255,255,255,.45); color:var(--muted); }
+    @media (max-width:880px){ .option-card{grid-template-columns:1fr;} .option-card__actions{justify-content:flex-start;} .options-toolbar{flex-direction:column; align-items:flex-start;} }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <section class="options-page">
+    <header class="options-hero">
+      <a class="options-back" href="{% url 'admin-ui:question-list' question.quiz_id %}">← Volver a preguntas</a>
+      <span class="options-eyebrow">{{ question.quiz.name }}</span>
+      <h1 class="options-title">Opciones de la pregunta {{ question.position }}</h1>
+      <p class="options-description">{{ question.statement|default:"Gestioná el conjunto de respuestas posibles de esta pregunta." }}</p>
+    </header>
+
+    <div class="options-toolbar">
+      <span class="options-toolbar__meta">{{ options|length }} opciones</span>
+      <a class="options-toolbar__cta" href="{% url 'admin-ui:option-create' question.id %}">Nueva opción</a>
+    </div>
+
+    {% if options %}
+      <div class="options-list">
+        {% for option in options %}
+          <article class="option-card {% if option.is_correct %}option-card--correct{% endif %}">
+            <div class="option-card__content">
+              <div class="option-card__meta">
+                <span>Posición {{ option.position }}</span>
+                <span>{% if option.is_correct %}Correcta{% else %}Distractor{% endif %}</span>
+              </div>
+              <h2 class="option-card__title">{{ option.text }}</h2>
+            </div>
+
+            <div class="option-card__actions">
+              <a class="oa-g" href="{% url 'admin-ui:option-edit' option.id %}">Editar</a>
+              <form method="post" action="{% url 'admin-ui:option-delete' option.id %}" onsubmit="return confirm('¿Eliminar esta opción?');">
+                {% csrf_token %}
+                <button class="oa-d" type="submit">Eliminar</button>
+              </form>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="options-empty">Esta pregunta todavía no tiene opciones. Sumá alternativas y marcá cuáles cuentan como correctas.</div>
+    {% endif %}
+  </section>
+{% endblock %}

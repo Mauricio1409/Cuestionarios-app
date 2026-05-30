@@ -286,7 +286,7 @@
           {% endif %}
 
           <div class="question-options">
-            {% for o in q.options.all %}
+            {% for o in q.shuffled_options %}
               <label class="question-option">
                 <input
                   type="{% if q.question_type == 'single_choice' %}radio{% else %}checkbox{% endif %}"

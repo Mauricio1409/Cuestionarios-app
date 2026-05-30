@@ -5,6 +5,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from apps.attempts.models import QuizAttempt
+from apps.attempts.services.attempt_service import AttemptService
 from apps.quizzes.models import Question, QuestionOption, QuestionType, Quiz
 from apps.subjects.models import Subject
 from apps.users.models import User
@@ -102,7 +103,7 @@ class AttemptFlowTests(TestCase):
         self.assertContains(response, "Revisar intento")
         self.assertContains(response, "Volver a intentarlo")
 
-    def test_take_attempt_renders_questions_ordered_by_position(self):
+    def test_take_attempt_randomizes_questions_stably_per_attempt(self):
         quiz = Quiz.objects.create(subject=self.subject, name="Orden", is_active=True)
         q2 = Question.objects.create(
             quiz=quiz,
@@ -118,15 +119,59 @@ class AttemptFlowTests(TestCase):
             score=Decimal("1.00"),
             position=1,
         )
+        q3 = Question.objects.create(
+            quiz=quiz,
+            statement="Tercera",
+            question_type=QuestionType.SINGLE_CHOICE,
+            score=Decimal("1.00"),
+            position=3,
+        )
+        q4 = Question.objects.create(
+            quiz=quiz,
+            statement="Cuarta",
+            question_type=QuestionType.SINGLE_CHOICE,
+            score=Decimal("1.00"),
+            position=4,
+        )
         QuestionOption.objects.create(question=q1, text="A", is_correct=True, position=1)
         QuestionOption.objects.create(question=q2, text="B", is_correct=True, position=1)
+        QuestionOption.objects.create(question=q3, text="C", is_correct=True, position=1)
+        QuestionOption.objects.create(question=q4, text="D", is_correct=True, position=1)
         attempt = QuizAttempt.objects.create(user=self.user, quiz=quiz)
 
         self.client.force_login(self.user)
-        response = self.client.get(reverse("attempts:take", args=[attempt.id]))
+        response_a = self.client.get(reverse("attempts:take", args=[attempt.id]))
+        response_b = self.client.get(reverse("attempts:take", args=[attempt.id]))
 
-        ordered_questions = list(response.context["questions"])
-        self.assertEqual([q.id for q in ordered_questions], [q1.id, q2.id])
+        question_ids_a = [q.id for q in response_a.context["questions"]]
+        question_ids_b = [q.id for q in response_b.context["questions"]]
+
+        self.assertEqual(question_ids_a, question_ids_b)
+        self.assertCountEqual(question_ids_a, [q1.id, q2.id, q3.id, q4.id])
+        self.assertNotEqual(question_ids_a, [q1.id, q2.id, q3.id, q4.id])
+
+    def test_take_attempt_randomizes_options_stably_per_attempt(self):
+        quiz = Quiz.objects.create(subject=self.subject, name="Opciones", is_active=True)
+        question = Question.objects.create(
+            quiz=quiz,
+            statement="Elegí una",
+            question_type=QuestionType.SINGLE_CHOICE,
+            score=Decimal("1.00"),
+            position=1,
+        )
+        option_a = QuestionOption.objects.create(question=question, text="A", is_correct=False, position=1)
+        option_b = QuestionOption.objects.create(question=question, text="B", is_correct=True, position=2)
+        option_c = QuestionOption.objects.create(question=question, text="C", is_correct=False, position=3)
+        option_d = QuestionOption.objects.create(question=question, text="D", is_correct=False, position=4)
+        attempt = QuizAttempt.objects.create(user=self.user, quiz=quiz)
+
+        ordered_question = AttemptService().questions_for_attempt_display(attempt)[0]
+        shuffled_ids_first = [option.id for option in ordered_question.shuffled_options]
+        shuffled_ids_second = [option.id for option in AttemptService().questions_for_attempt_display(attempt)[0].shuffled_options]
+
+        self.assertEqual(shuffled_ids_first, shuffled_ids_second)
+        self.assertCountEqual(shuffled_ids_first, [option_a.id, option_b.id, option_c.id, option_d.id])
+        self.assertNotEqual(shuffled_ids_first, [option_a.id, option_b.id, option_c.id, option_d.id])
 
     def test_attempt_detail_foreign_user_redirects_with_explicit_message(self):
         quiz, *_ = self._build_quiz_with_questions(is_active=True)
@@ -159,6 +204,56 @@ class AttemptFlowTests(TestCase):
         self.assertContains(response, "Números pares")
         self.assertContains(response, "Volver a intentarlo")
         self.assertContains(response, reverse("attempts:start", args=[quiz.id]))
+
+    def test_attempt_detail_reuses_same_question_and_option_order_as_attempt(self):
+        quiz = Quiz.objects.create(subject=self.subject, name="Orden revisión", is_active=True)
+        q1 = Question.objects.create(
+            quiz=quiz,
+            statement="Primera",
+            question_type=QuestionType.SINGLE_CHOICE,
+            score=Decimal("1.00"),
+            position=1,
+        )
+        q2 = Question.objects.create(
+            quiz=quiz,
+            statement="Segunda",
+            question_type=QuestionType.SINGLE_CHOICE,
+            score=Decimal("1.00"),
+            position=2,
+        )
+        q3 = Question.objects.create(
+            quiz=quiz,
+            statement="Tercera",
+            question_type=QuestionType.SINGLE_CHOICE,
+            score=Decimal("1.00"),
+            position=3,
+        )
+        q1a = QuestionOption.objects.create(question=q1, text="A1", is_correct=True, position=1)
+        q1b = QuestionOption.objects.create(question=q1, text="B1", is_correct=False, position=2)
+        QuestionOption.objects.create(question=q2, text="A2", is_correct=True, position=1)
+        QuestionOption.objects.create(question=q2, text="B2", is_correct=False, position=2)
+        QuestionOption.objects.create(question=q3, text="A3", is_correct=True, position=1)
+        QuestionOption.objects.create(question=q3, text="B3", is_correct=False, position=2)
+        attempt = QuizAttempt.objects.create(user=self.user, quiz=quiz)
+
+        self.client.force_login(self.user)
+        take_response = self.client.get(reverse("attempts:take", args=[attempt.id]))
+        take_question_ids = [question.id for question in take_response.context["questions"]]
+        take_first_question_option_ids = [option.id for option in take_response.context["questions"][0].shuffled_options]
+
+        self.client.post(
+            reverse("attempts:submit", args=[attempt.id]),
+            {
+                f"question_{q1.id}": [str(q1a.id)],
+                f"question_{q2.id}": [],
+                f"question_{q3.id}": [],
+            },
+        )
+        detail_response = self.client.get(reverse("attempts:detail", args=[attempt.id]))
+        ordered_answers = detail_response.context["ordered_answers"]
+
+        self.assertEqual([answer.question_id for answer in ordered_answers], take_question_ids)
+        self.assertEqual([option["id"] for option in ordered_answers[0].review_options], take_first_question_option_ids)
 
 
 class AttemptAdminFiltersTests(TestCase):

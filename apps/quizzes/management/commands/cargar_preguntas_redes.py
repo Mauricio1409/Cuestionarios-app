@@ -8,7 +8,7 @@ from apps.quizzes.models import Quiz, Question, QuestionOption, QuestionType
 
 
 SUBJECT_NAME = "Redes"
-QUIZ_NAME = "1er Parcial Teórico Redes"
+QUIZ_NAME = "1er Parcial Teórico RIN"
 
 
 QUESTIONS = [
@@ -1359,8 +1359,77 @@ QUESTIONS = [
 ]
 
 
+def build_explanation(item):
+    """
+    Genera una justificación para guardar en Question.explanation.
+    Evita referencias del tipo "PDF X, página Y" y explica por qué la respuesta es correcta.
+    """
+    statement = item["statement"].lower()
+    correct_options = [text for text, is_correct in item["options"] if is_correct]
+
+    if len(correct_options) == 1:
+        base = f"La respuesta correcta es '{correct_options[0]}'. "
+    else:
+        joined = ", ".join(f"'{option}'" for option in correct_options)
+        base = f"Las respuestas correctas son {joined}. "
+
+    keyword_explanations = [
+        (["máscara", "ipv4"], "La máscara permite separar la porción de red y la porción de host de una dirección IPv4."),
+        (["switch", "modelo osi"], "Un switch toma decisiones usando direcciones MAC, por eso trabaja principalmente en la capa de enlace de datos."),
+        (["clase", "dirección ipv4"], "En direccionamiento classful, la clase se reconoce por el valor del primer octeto."),
+        (["placa de red"], "La placa de red interviene en la capa física y en la subcapa MAC porque transmite bits y maneja direcciones MAC."),
+        (["cobertura"], "El orden de cobertura crece desde redes personales hasta redes globales: PAN, LAN, MAN, WAN e Internet."),
+        (["puerta de enlace"], "La puerta de enlace solo es necesaria para comunicarse fuera de la LAN; dentro de la misma red los hosts se comunican directamente."),
+        (["capa de aplicación"], "Los protocolos de aplicación brindan servicios al usuario o a las aplicaciones; TCP/UDP pertenecen a transporte e IP a interred."),
+        (["dominios de colisión"], "Un switch separa dominios de colisión por puerto, mientras que un hub mantiene un medio compartido."),
+        (["cliente-servidor"], "En el modelo cliente-servidor un equipo solicita un servicio y otro lo provee."),
+        (["bits tiene una dirección ipv4"], "IPv4 utiliza 32 bits, representados normalmente como cuatro octetos decimales."),
+        (["puente"], "Un puente filtra y reenvía tramas usando direcciones MAC, por eso se asocia a la capa de enlace."),
+        (["bluetooth"], "Bluetooth es una tecnología de corto alcance para redes personales, por eso corresponde a PAN."),
+        (["cut-through"], "Cut-through reenvía la trama apenas lee la MAC destino, reduciendo la latencia."),
+        (["almacenamiento", "reenvío"], "Store-and-forward almacena la trama completa y verifica errores antes de reenviarla."),
+        (["direcciones mac"], "Dentro de una LAN, la entrega de tramas se realiza usando direcciones MAC."),
+        (["servicios diferenciados"], "El campo de Servicios Diferenciados permite dar distinto tratamiento o prioridad a los paquetes."),
+        (["interfaz", "protocolos"], "La interfaz define los servicios que una capa inferior ofrece a la capa superior inmediata."),
+        (["itu"], "La ITU es el organismo internacional especializado en telecomunicaciones."),
+        (["csma/ca"], "En CSMA/CA se intenta evitar colisiones escuchando el medio y usando tramas de control como RTS/CTS."),
+        (["ipv4", "no orientado"], "IPv4 envía datagramas independientes y no establece conexión previa ni garantiza orden o entrega."),
+        (["interred"], "La capa de Interred se ocupa del direccionamiento y encaminamiento de paquetes entre redes."),
+        (["rfc"], "Los RFC son documentos técnicos que describen protocolos, estándares y prácticas de Internet."),
+        (["tabla cam"], "La tabla CAM relaciona direcciones MAC con puertos del switch para reenviar tramas correctamente."),
+        (["sumarización"], "La sumarización agrupa varias rutas en una sola, reduciendo el tamaño de la tabla de encaminamiento."),
+        (["encapsulamiento"], "En el origen, los datos bajan por la pila TCP/IP: datos, segmentos, paquetes/datagramas, tramas y bits."),
+        (["internet", "enrutadas"], "Las direcciones privadas no se enrutan directamente por Internet; para eso se usan direcciones públicas."),
+        (["fast ethernet"], "La tasa final queda limitada por el componente más lento; si las placas son Fast Ethernet, el límite es 100 Mb/s."),
+        (["wlan"], "Una WLAN es inalámbrica, de difusión y utiliza CSMA/CA para compartir el medio."),
+        (["ttl"], "El router descarta un paquete cuando el TTL llega a cero para evitar bucles infinitos."),
+        (["arpanet"], "ARPANET se basó en conmutación de paquetes, principio central de Internet."),
+        (["rfc 1918"], "RFC 1918 define los rangos privados 10.0.0.0/8, 172.16.0.0/12 y 192.168.0.0/16."),
+        (["checksum"], "El checksum de IPv4 protege la cabecera y se recalcula cuando cambia el TTL en cada salto."),
+        (["crc"], "Si el CRC/FCS no coincide, la trama se considera dañada y la placa de red la descarta."),
+        (["arp-reply"], "ARP Reply responde a un host específico, por eso usa una trama unicast."),
+        (["arp-request"], "ARP Request usa broadcast porque todavía no se conoce la MAC asociada a la IP buscada."),
+        (["dhcp"], "DHCP permite obtener parámetros de red automáticamente; al inicio se usan direcciones de broadcast porque el host aún no conoce su configuración."),
+        (["vlsm"], "VLSM permite usar máscaras de distinta longitud, ajustando cada subred a la cantidad de hosts necesaria."),
+        (["/28"], "Un prefijo /28 equivale a 28 bits en 1 en la máscara: 255.255.255.240."),
+        (["and booleano"], "El AND entre IP y máscara conserva los bits de red y permite obtener la dirección de subred."),
+        (["pan"], "PAN identifica redes de área personal, típicamente de corto alcance."),
+        (["wan"], "WAN significa Wide Area Network, una red de amplia cobertura geográfica."),
+        (["tcp"], "TCP brinda entrega confiable, ordenada e íntegra entre extremos."),
+        (["udp"], "UDP prioriza baja sobrecarga y rapidez, pero no garantiza orden ni entrega."),
+        (["host a red"], "Host a Red encapsula paquetes en tramas para enviarlos por el medio local."),
+        (["transporte"], "La capa de transporte brinda comunicación extremo a extremo entre procesos o aplicaciones."),
+    ]
+
+    for keywords, explanation in keyword_explanations:
+        if all(keyword in statement for keyword in keywords):
+            return base + explanation
+
+    return base + "La opción marcada coincide con el concepto evaluado; las demás alternativas corresponden a otra capa, tecnología, dirección o caso de uso."
+
+
 class Command(BaseCommand):
-    help = "Carga la materia Redes y el cuestionario del 1er Parcial Teórico RIN con preguntas deduplicadas."
+    help = "Carga la materia Redes y el cuestionario del 1er Parcial Teórico RIN con preguntas deduplicadas y justificaciones explicativas."
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -1404,7 +1473,7 @@ class Command(BaseCommand):
                 statement=normalized_statement,
                 question_type=item["type"],
                 score=Decimal("1.00"),
-                explanation=item.get("explanation", ""),
+                explanation=build_explanation(item),
                 position=index,
             )
 

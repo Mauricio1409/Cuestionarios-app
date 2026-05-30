@@ -3,6 +3,9 @@ from django.urls import path
 from apps.quizzes.views_web import (
     AdminDashboardView,
     admin_option_create,
+    admin_option_delete,
+    admin_option_edit,
+    admin_option_list,
     admin_question_create,
     admin_question_delete,
     admin_question_edit,
@@ -26,6 +29,9 @@ urlpatterns = [
     path("quizzes/<int:quiz_id>/questions/new/", admin_question_create, name="question-create"),
     path("questions/<int:question_id>/edit/", admin_question_edit, name="question-edit"),
     path("questions/<int:question_id>/delete/", admin_question_delete, name="question-delete"),
+    path("questions/<int:question_id>/options/", admin_option_list, name="option-list"),
     path("questions/<int:question_id>/options/new/", admin_option_create, name="option-create"),
+    path("options/<int:option_id>/edit/", admin_option_edit, name="option-edit"),
+    path("options/<int:option_id>/delete/", admin_option_delete, name="option-delete"),
     path("attempts/", admin_attempt_list, name="attempt-list"),
 ]
